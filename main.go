@@ -14,7 +14,10 @@ func main() {
 	log.SetFlags(0)
 	config := getConfig()
 	client := pagerduty.NewClient(config.APIKey)
-	user, _ := client.GetCurrentUserWithContext(context.TODO(), pagerduty.GetCurrentUserOptions{})
+	user, err := client.GetCurrentUserWithContext(context.TODO(), pagerduty.GetCurrentUserOptions{})
+	if err != nil {
+		log.Fatalln("Unable to GET current user from PagerDuty API.")
+	}
 	for _, arg := range os.Args[1:] {
 		if !isValidInput(arg) {
 			log.Fatalf("Invalid Input: %s\n", arg)

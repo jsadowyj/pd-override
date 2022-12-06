@@ -50,6 +50,9 @@ func wdToTimes(dayRanges []string) []time.Time {
 	// starts week at sunday @ 00:00
 	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -int(now.Weekday()))
 	for _, dayRange := range dayRanges {
+		if dayRange == "" {
+			continue
+		}
 		split := strings.Split(dayRange, "-")
 		layout := "20060102"
 		if len(split) == 2 {

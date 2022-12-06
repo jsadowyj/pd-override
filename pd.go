@@ -19,7 +19,9 @@ func createOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
 
 	for _, dTime := range dTimes {
 		for _, timeRange := range timeRanges {
-			//dTime = time.Date(dTime.Year(), dTime.Month(), dTime.Day(), 0, 0, 0, 0, time.Now().Location())
+			if timeRange == "" {
+				continue
+			}
 			rSplit := strings.Split(timeRange, "-")
 			hours, minutes := toDuration(rSplit[0][:2], rSplit[0][2:])
 			start := dTime.Add(hours).Add(minutes).Format(time.RFC3339)
