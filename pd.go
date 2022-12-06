@@ -1,33 +1,48 @@
 package main
 
 import (
-	"strconv"
+	"errors"
+	"fmt"
+	"log"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/PagerDuty/go-pagerduty"
 )
 
-func generateOverrides(days []time.Weekday, timeRanges []string) []pagerduty.Override {
+func createOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
 	var overrides []pagerduty.Override
-	now := time.Now()
-	weekStart := now.AddDate(0, 0, -int(now.Weekday()))
-	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
+	dayRanges := strings.Split(wdStrs, ",")
+	timeRanges := strings.Split(timeStrs, ",")
+	dTimes := wdToTimes(dayRanges)
 
-	for _, day := range days {
+	for _, dTime := range dTimes {
 		for _, timeRange := range timeRanges {
+			//dTime = time.Date(dTime.Year(), dTime.Month(), dTime.Day(), 0, 0, 0, 0, time.Now().Location())
 			rSplit := strings.Split(timeRange, "-")
-			hour, _ := strconv.Atoi((rSplit[0])[:2])
-			minute, _ := strconv.Atoi((rSplit[0])[2:])
-			start := weekStart.AddDate(0, 0, int(day)).Add(time.Duration(hour) * time.Hour).Add(time.Duration(minute) * time.Minute).Format(time.RFC3339)
-			hour, _ = strconv.Atoi((rSplit[1])[:2])
-			minute, _ = strconv.Atoi((rSplit[1])[2:])
-			end := weekStart.AddDate(0, 0, int(day)).Add(time.Duration(hour) * time.Hour).Add(time.Duration(minute) * time.Minute).Format(time.RFC3339)
-
+			hours, minutes := toDuration(rSplit[0][:2], rSplit[0][2:])
+			start := dTime.Add(hours).Add(minutes).Format(time.RFC3339)
+			hours, minutes = toDuration(rSplit[1][:2], rSplit[1][2:])
+			end := dTime.Add(hours).Add(minutes).Format(time.RFC3339)
 			overrides = append(overrides, pagerduty.Override{Start: start, End: end})
-
 		}
 	}
-
 	return overrides
+}
+
+func printOverride(override pagerduty.Override, msg string) {
+	layout := "2006-01-02T15:04:05Z"
+	start, _ := time.Parse(layout, override.Start)
+	end, _ := time.Parse(layout, override.End)
+	fmt.Printf("(%s) Created Override for %s: %s-%s\n", msg, override.User.Summary, start.Local().Format("Mon, 02 Jan 2006 15:04:05"), end.Local().Format("15:04:05 MST"))
+}
+
+func printOverrideError(err error, msg string) {
+	var aerr pagerduty.APIError
+	if errors.As(err, &aerr) {
+		fmt.Fprintf(os.Stderr, "(%s) Failed to create override: %s [%d]\n", msg, aerr.APIError.ErrorObject.Message, aerr.APIError.ErrorObject.Code)
+	} else {
+		log.Fatalln(err)
+	}
 }

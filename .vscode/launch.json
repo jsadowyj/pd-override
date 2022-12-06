@@ -10,7 +10,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}",
-      "args": ["M@0900-1700"],
+      "args": ["M-F@0900-1700"],
       "preLaunchTask": "build"
     }
   ]
