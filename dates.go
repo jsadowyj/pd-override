@@ -33,6 +33,10 @@ func toDuration(hours, minutes string) (hrs, mins time.Duration) {
 
 func createTimeRange(start time.Time, end time.Time) []time.Time {
 	var times []time.Time
+	// handles range between weeks
+	if start.After(end) || start == end {
+		end = end.AddDate(0, 0, 7)
+	}
 	for start.Before(end) || start == end {
 		times = append(times, start)
 		start = start.AddDate(0, 0, 1)
