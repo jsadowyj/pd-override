@@ -22,9 +22,13 @@ func main() {
 		if !isValidInput(arg) {
 			log.Fatalf("Invalid Input: %s\n", arg)
 		}
-		// todo: add day ranges without specifying time -> M-F,20221205-20221207
 		dtSplit := strings.Split(arg, "@") // "M-F@09:00-12:00,01:00-02:00" -> ["M-F", "09:00-12:00,01:00-02:00"]
-		overrides := createOverrides(dtSplit[0], dtSplit[1])
+		var overrides []pagerduty.Override
+		if len(dtSplit) == 2 {
+			overrides = createDailyOverrides(dtSplit[0], dtSplit[1])
+		} else {
+			overrides = createOverrides(dtSplit[0])
+		}
 
 		for _, override := range overrides {
 			override.User = user.APIObject

@@ -44,6 +44,43 @@ func createTimeRange(start time.Time, end time.Time) []time.Time {
 	return times
 }
 
+func parseWeekdayRange(startStr, endStr string) (start, end time.Time) {
+	now := time.Now()
+	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -int(now.Weekday()))
+	start = weekStart.AddDate(0, 0, int(dow[startStr]))
+	end = weekStart.AddDate(0, 0, int(dow[endStr])).AddDate(0, 0, 1)
+
+	return start, end
+}
+
+func parseDateRange(startStr, endStr string) (start, end time.Time) {
+	now := time.Now()
+	layout := "20060102"
+	sParsed, err := time.Parse(layout, startStr)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	eParsed, err := time.Parse(layout, endStr)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	start = time.Date(sParsed.Year(), sParsed.Month(), sParsed.Day(), 0, 0, 0, 0, now.Location())
+	end = time.Date(eParsed.Year(), eParsed.Month(), eParsed.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, 1)
+	return start, end
+}
+
+func parseDayRanges(startStr, endStr string) (start, end time.Time) {
+	if len(startStr) == 1 && len(endStr) == 1 {
+		start, end = parseWeekdayRange(startStr, endStr)
+	} else if len(startStr) == 8 && len(endStr) == 8 {
+		start, end = parseDateRange(startStr, endStr)
+	} else {
+		// this should theoretically never happen; but it's here just in case.
+		log.Fatalf("parseDays(): invalid input -- %s-%s", startStr, endStr)
+	}
+	return start, end
+}
+
 func wdToTimes(dayRanges []string) []time.Time {
 	var times []time.Time
 	now := time.Now()
