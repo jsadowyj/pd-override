@@ -19,7 +19,7 @@ func createOverrides(wdStrs string) []pagerduty.Override {
 		if dayRange == "" || len(dSplit) != 2 {
 			continue
 		}
-		start, end := parseDayRanges(dSplit[0], dSplit[1])
+		start, end := parseDateRanges(dSplit[0], dSplit[1])
 		override := pagerduty.Override{Start: start.Format(time.RFC3339), End: end.Format(time.RFC3339)}
 		overrides = append(overrides, override)
 	}

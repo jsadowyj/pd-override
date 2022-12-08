@@ -31,12 +31,8 @@ func toDuration(hours, minutes string) (hrs, mins time.Duration) {
 	return hrs, mins
 }
 
-func createTimeRange(start time.Time, end time.Time) []time.Time {
+func expandDatetimes(start time.Time, end time.Time) []time.Time {
 	var times []time.Time
-	// handles range between weeks
-	if start.After(end) || start == end {
-		end = end.AddDate(0, 0, 7)
-	}
 	for start.Before(end) || start == end {
 		times = append(times, start)
 		start = start.AddDate(0, 0, 1)
@@ -44,36 +40,60 @@ func createTimeRange(start time.Time, end time.Time) []time.Time {
 	return times
 }
 
-func parseWeekdayRange(startStr, endStr string) (start, end time.Time) {
+func parseDatetime(str string) (dt time.Time) {
 	now := time.Now()
+	// starts week at sunday @ 00:00
 	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -int(now.Weekday()))
-	start = weekStart.AddDate(0, 0, int(dow[startStr]))
-	end = weekStart.AddDate(0, 0, int(dow[endStr])).AddDate(0, 0, 1)
+	layout := "20060102"
+	if len(str) < 8 {
+		dt = weekStart.AddDate(0, 0, int(dow[str]))
+	} else {
+		parsed, err := time.Parse(layout, str)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		dt = time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, now.Location())
+	}
+	return dt
+}
+
+func parseWeekdayRange(sDay, eDay string) (start, end time.Time) {
+	now := time.Now()
+	// starts week at sunday @ 00:00
+	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -int(now.Weekday()))
+	start = weekStart.AddDate(0, 0, int(dow[sDay]))
+	end = weekStart.AddDate(0, 0, int(dow[eDay]))
+	// handles range between weeks
+	overflowDays := 0
+	if start.After(end) || start == end {
+		overflowDays += 7
+	}
+	end = end.AddDate(0, 0, overflowDays)
 
 	return start, end
 }
 
-func parseDateRange(startStr, endStr string) (start, end time.Time) {
+func parseLongDateRange(sDate, eDate string) (start, end time.Time) {
 	now := time.Now()
 	layout := "20060102"
-	sParsed, err := time.Parse(layout, startStr)
+	sParsed, err := time.Parse(layout, sDate)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	eParsed, err := time.Parse(layout, endStr)
+	eParsed, err := time.Parse(layout, eDate)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	start = time.Date(sParsed.Year(), sParsed.Month(), sParsed.Day(), 0, 0, 0, 0, now.Location())
-	end = time.Date(eParsed.Year(), eParsed.Month(), eParsed.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, 1)
+	end = time.Date(eParsed.Year(), eParsed.Month(), eParsed.Day(), 0, 0, 0, 0, now.Location())
 	return start, end
 }
 
-func parseDayRanges(startStr, endStr string) (start, end time.Time) {
+func parseDateRanges(startStr, endStr string) (start, end time.Time) {
 	if len(startStr) == 1 && len(endStr) == 1 {
 		start, end = parseWeekdayRange(startStr, endStr)
 	} else if len(startStr) == 8 && len(endStr) == 8 {
-		start, end = parseDateRange(startStr, endStr)
+		start, end = parseLongDateRange(startStr, endStr)
 	} else {
 		// this should theoretically never happen; but it's here just in case.
 		log.Fatalf("parseDays(): invalid input -- %s-%s", startStr, endStr)
@@ -81,48 +101,19 @@ func parseDayRanges(startStr, endStr string) (start, end time.Time) {
 	return start, end
 }
 
-func wdToTimes(dayRanges []string) []time.Time {
+func wdToTimes(dtRanges []string) []time.Time {
 	var times []time.Time
-	now := time.Now()
-	// starts week at sunday @ 00:00
-	weekStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -int(now.Weekday()))
-	for _, dayRange := range dayRanges {
-		if dayRange == "" {
+	for _, dtRange := range dtRanges {
+		if dtRange == "" {
 			continue
 		}
-		split := strings.Split(dayRange, "-")
-		layout := "20060102"
-		if len(split) == 2 {
-			if len(dayRange) < (17) {
-				start := weekStart.AddDate(0, 0, int(dow[split[0]]))
-				end := weekStart.AddDate(0, 0, int(dow[split[1]]))
-				times = append(times, createTimeRange(start, end)...)
-			} else {
-				sParsed, err := time.Parse(layout, split[0])
-				if err != nil {
-					log.Fatalln(err)
-				}
-				eParsed, err := time.Parse(layout, split[1])
-				if err != nil {
-					log.Fatalln(err)
-				}
-				start := time.Date(sParsed.Year(), sParsed.Month(), sParsed.Day(), 0, 0, 0, 0, now.Location())
-				end := time.Date(eParsed.Year(), eParsed.Month(), eParsed.Day(), 0, 0, 0, 0, now.Location())
-				times = append(times, createTimeRange(start, end)...)
-			}
+		dSplit := strings.Split(dtRange, "-")
+		if len(dSplit) == 2 {
+			start, end := parseDateRanges(dSplit[0], dSplit[1])
+			times = append(times, expandDatetimes(start, end)...)
 		} else {
-			day := dayRange
-			if len(dayRange) < 8 {
-				t := weekStart.AddDate(0, 0, int(dow[day]))
-				times = append(times, t)
-			} else {
-				parsed, err := time.Parse(layout, day)
-				if err != nil {
-					log.Fatalln(err)
-				}
-				t := time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, now.Location())
-				times = append(times, t)
-			}
+			datetime := parseDatetime(dSplit[0])
+			times = append(times, datetime)
 		}
 	}
 	return times
