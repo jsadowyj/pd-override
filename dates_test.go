@@ -232,11 +232,56 @@ func TestWdToTimes(t *testing.T) {
 		input []string
 		want  []time.Time
 	}{
-		{input: []string{"M-F", "S", "U"}, want: []time.Time{weekStart.AddDate(0, 0, 1), weekStart.AddDate(0, 0, 2), weekStart.AddDate(0, 0, 3), weekStart.AddDate(0, 0, 4), weekStart.AddDate(0, 0, 5), weekStart.AddDate(0, 0, 6), weekStart.AddDate(0, 0, 0)}},
-		{input: []string{"U-S"}, want: []time.Time{weekStart.AddDate(0, 0, 0), weekStart.AddDate(0, 0, 1), weekStart.AddDate(0, 0, 2), weekStart.AddDate(0, 0, 3), weekStart.AddDate(0, 0, 4), weekStart.AddDate(0, 0, 5), weekStart.AddDate(0, 0, 6)}},
-		{input: []string{"U-W", "S"}, want: []time.Time{weekStart.AddDate(0, 0, 0), weekStart.AddDate(0, 0, 1), weekStart.AddDate(0, 0, 2), weekStart.AddDate(0, 0, 3), weekStart.AddDate(0, 0, 6)}},
-		{input: []string{"W-M", "M"}, want: []time.Time{weekStart.AddDate(0, 0, 3), weekStart.AddDate(0, 0, 4), weekStart.AddDate(0, 0, 5), weekStart.AddDate(0, 0, 6), weekStart.AddDate(0, 0, 7), weekStart.AddDate(0, 0, 8), weekStart.AddDate(0, 0, 1)}},
-		{input: []string{"20221106-20221108", "M"}, want: []time.Time{time.Date(2022, 11, 6, 0, 0, 0, 0, now.Location()), time.Date(2022, 11, 7, 0, 0, 0, 0, now.Location()), time.Date(2022, 11, 8, 0, 0, 0, 0, now.Location()), weekStart.AddDate(0, 0, 1)}},
+		{
+			input: []string{"M-F", "S", "U"},
+			want: []time.Time{
+				weekStart.AddDate(0, 0, 1),
+				weekStart.AddDate(0, 0, 2),
+				weekStart.AddDate(0, 0, 3),
+				weekStart.AddDate(0, 0, 4),
+				weekStart.AddDate(0, 0, 5),
+				weekStart.AddDate(0, 0, 6),
+				weekStart.AddDate(0, 0, 0)},
+		},
+		{
+			input: []string{"U-S"},
+			want: []time.Time{
+				weekStart.AddDate(0, 0, 0),
+				weekStart.AddDate(0, 0, 1),
+				weekStart.AddDate(0, 0, 2),
+				weekStart.AddDate(0, 0, 3),
+				weekStart.AddDate(0, 0, 4),
+				weekStart.AddDate(0, 0, 5),
+				weekStart.AddDate(0, 0, 6)},
+		},
+		{
+			input: []string{"U-W", "S"},
+			want: []time.Time{
+				weekStart.AddDate(0, 0, 0),
+				weekStart.AddDate(0, 0, 1),
+				weekStart.AddDate(0, 0, 2),
+				weekStart.AddDate(0, 0, 3),
+				weekStart.AddDate(0, 0, 6)},
+		},
+		{
+			input: []string{"W-M", "M"},
+			want: []time.Time{
+				weekStart.AddDate(0, 0, 3),
+				weekStart.AddDate(0, 0, 4),
+				weekStart.AddDate(0, 0, 5),
+				weekStart.AddDate(0, 0, 6),
+				weekStart.AddDate(0, 0, 7),
+				weekStart.AddDate(0, 0, 8),
+				weekStart.AddDate(0, 0, 1)},
+		},
+		{
+			input: []string{"20221106-20221108", "M"},
+			want: []time.Time{
+				time.Date(2022, 11, 6, 0, 0, 0, 0, now.Location()),
+				time.Date(2022, 11, 7, 0, 0, 0, 0, now.Location()),
+				time.Date(2022, 11, 8, 0, 0, 0, 0, now.Location()),
+				weekStart.AddDate(0, 0, 1)},
+		},
 		{input: []string{"20221106"}, want: []time.Time{time.Date(2022, 11, 6, 0, 0, 0, 0, now.Location())}},
 	}
 
