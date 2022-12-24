@@ -87,6 +87,7 @@ func createDailyOverrides(wdStrs string, timeStrs string) []Override {
 	return overrides
 }
 
+// todo: consolidate print functions by taking a single Override argument
 func printOverride(override pagerduty.Override, msg string) {
 	layout := "2006-01-02T15:04:05Z"
 	start, _ := time.Parse(layout, override.Start)
