@@ -17,6 +17,16 @@ var dow = map[string]time.Weekday{
 	"S": time.Saturday,
 }
 
+var rDow = map[time.Weekday]string{
+	time.Sunday:    "U",
+	time.Monday:    "M",
+	time.Tuesday:   "T",
+	time.Wednesday: "W",
+	time.Thursday:  "R",
+	time.Friday:    "F",
+	time.Saturday:  "S",
+}
+
 func toDuration(hours, minutes string) (hrs, mins time.Duration) {
 	h, err := strconv.Atoi(hours)
 	if err != nil {
@@ -71,6 +81,8 @@ func parseWeekdayRange(sDay, eDay string) (start, end time.Time) {
 	if start.After(end) || start == end {
 		overflowDays += 7
 	}
+	// todo: handle case of start day before current day
+	// if start.Before(now) add 7 days to both start and end dates
 	end = end.AddDate(0, 0, overflowDays)
 
 	return start, end
