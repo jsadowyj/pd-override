@@ -32,7 +32,7 @@ func getConfig() Config {
 	}
 
 	if config.APIKey == "" {
-		log.Fatalln("authkey is not present in ~/.pd.yml file. Set PD_API_KEY environment variable to override.")
+		log.Fatalln("authtoken is not present in ~/.pd.yml file. Set PD_API_KEY environment variable to override.")
 	}
 	if config.ScheduleID == "" {
 		log.Fatalln("schedule_id is not present in ~/.pd.yml file. Set PD_SCHEDULE_ID environment variable to override.")
