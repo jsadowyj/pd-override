@@ -55,3 +55,8 @@ This command would create the following overrides:
 ```
 pd-override M,W@0900-1700 T,F@0900-1800 R@0900-1300
 ```
+
+Add override for specific date(s):
+```
+pd-override 20230801-20230803@0900-1700
+```
