@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -11,8 +12,41 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 )
 
-func createOverrides(wdStrs string) []pagerduty.Override {
-	var overrides []pagerduty.Override
+type Override struct {
+	// parent string, ex: M-F@0900-1700
+	pStr string
+	// day with time range string, ex: M@0900-1700
+	str string
+	// pagerduty override struct
+	pdOverride pagerduty.Override
+	// any error to be logged
+	err error
+}
+
+// implements the Error interface
+func (o Override) Error() string {
+	return o.err.Error()
+}
+
+func sendOverrides(overrides []Override) {
+	config := getConfig()
+	client := pagerduty.NewClient(config.APIKey)
+	user, err := client.GetCurrentUserWithContext(context.TODO(), pagerduty.GetCurrentUserOptions{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for _, override := range overrides {
+		override.pdOverride.User = user.APIObject
+		if ov, err := client.CreateOverrideWithContext(context.TODO(), config.ScheduleID, override.pdOverride); err != nil {
+			printOverrideError(err, override.str)
+		} else {
+			printOverride(*ov, override.str)
+		}
+	}
+}
+
+func createOverrides(wdStrs string) []Override {
+	var overrides []Override
 	dayRanges := strings.Split(wdStrs, ",")
 	for _, dayRange := range dayRanges {
 		dSplit := strings.Split(dayRange, "-")
@@ -21,14 +55,16 @@ func createOverrides(wdStrs string) []pagerduty.Override {
 		}
 		start, end := parseDateRanges(dSplit[0], dSplit[1])
 		end = end.AddDate(0, 0, 1)
-		override := pagerduty.Override{Start: start.Format(time.RFC3339), End: end.Format(time.RFC3339)}
+		pdOverride := pagerduty.Override{Start: start.Format(time.RFC3339), End: end.Format(time.RFC3339)}
+		// todo: remove hardcoded nil
+		override := Override{pStr: wdStrs, str: dayRange, pdOverride: pdOverride, err: nil}
 		overrides = append(overrides, override)
 	}
 	return overrides
 }
 
-func createDailyOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
-	var overrides []pagerduty.Override
+func createDailyOverrides(wdStrs string, timeStrs string) []Override {
+	var overrides []Override
 	dayRanges := strings.Split(wdStrs, ",")
 	timeRanges := strings.Split(timeStrs, ",")
 	dTimes := wdToTimes(dayRanges)
@@ -43,12 +79,15 @@ func createDailyOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
 			start := dTime.Add(hours).Add(minutes).Format(time.RFC3339)
 			hours, minutes = toDuration(rSplit[1][:2], rSplit[1][2:])
 			end := dTime.Add(hours).Add(minutes).Format(time.RFC3339)
-			overrides = append(overrides, pagerduty.Override{Start: start, End: end})
+			// todo: remove hardcoded nil
+			override := Override{pStr: wdStrs + "@" + timeStrs, str: rDow[dTime.Weekday()] + "@" + timeRange, pdOverride: pagerduty.Override{Start: start, End: end}, err: nil}
+			overrides = append(overrides, override)
 		}
 	}
 	return overrides
 }
 
+// todo: consolidate print functions by taking a single Override argument
 func printOverride(override pagerduty.Override, msg string) {
 	layout := "2006-01-02T15:04:05Z"
 	start, _ := time.Parse(layout, override.Start)
