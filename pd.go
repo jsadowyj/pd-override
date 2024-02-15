@@ -11,7 +11,23 @@ import (
 	"github.com/PagerDuty/go-pagerduty"
 )
 
-func createOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
+func createOverrides(wdStrs string) []pagerduty.Override {
+	var overrides []pagerduty.Override
+	dayRanges := strings.Split(wdStrs, ",")
+	for _, dayRange := range dayRanges {
+		dSplit := strings.Split(dayRange, "-")
+		if dayRange == "" || len(dSplit) != 2 {
+			continue
+		}
+		start, end := parseDateRanges(dSplit[0], dSplit[1])
+		end = end.AddDate(0, 0, 1)
+		override := pagerduty.Override{Start: start.Format(time.RFC3339), End: end.Format(time.RFC3339)}
+		overrides = append(overrides, override)
+	}
+	return overrides
+}
+
+func createDailyOverrides(wdStrs string, timeStrs string) []pagerduty.Override {
 	var overrides []pagerduty.Override
 	dayRanges := strings.Split(wdStrs, ",")
 	timeRanges := strings.Split(timeStrs, ",")
